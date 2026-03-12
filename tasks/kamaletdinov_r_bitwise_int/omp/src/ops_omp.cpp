@@ -19,17 +19,18 @@ void CountingSortByDigitSequential(std::vector<int> &arr, int exp) {
   std::array<int, 10> count = {};
 
   for (int i = 0; i < n; i++) {
-    count[(arr[i] / exp) % 10]++;
+    const int digit = (arr.at(i) / exp) % 10;
+    count.at(digit)++;
   }
 
   for (int i = 1; i < 10; i++) {
-    count[i] += count[i - 1];
+    count.at(i) += count.at(i - 1);
   }
 
   for (int i = n - 1; i >= 0; i--) {
-    const int digit = (arr[i] / exp) % 10;
-    output[count[digit] - 1] = arr[i];
-    count[digit]--;
+    const int digit = (arr.at(i) / exp) % 10;
+    output.at(count.at(digit) - 1) = arr.at(i);
+    count.at(digit)--;
   }
 
   arr.swap(output);
@@ -48,38 +49,38 @@ void CountingSortByDigitParallel(std::vector<int> &arr, int exp) {
 #pragma omp parallel default(none) shared(arr, exp, local_counts, n) num_threads(thread_count)
   {
     const int tid = omp_get_thread_num();
-    auto &current = local_counts[tid];
+    auto &current = local_counts.at(tid);
     current.fill(0);
 
 #pragma omp for schedule(static)
     for (int i = 0; i < n; i++) {
-      const int digit = (arr[i] / exp) % 10;
-      current[digit]++;
+      const int digit = (arr.at(i) / exp) % 10;
+      current.at(digit)++;
     }
   }
 
   std::array<int, 10> global_count = {};
-  for (int t = 0; t < thread_count; t++) {
-    for (int d = 0; d < 10; d++) {
-      global_count[d] += local_counts[t][d];
+  for (int thread_idx = 0; thread_idx < thread_count; thread_idx++) {
+    for (int digit_idx = 0; digit_idx < 10; digit_idx++) {
+      global_count.at(digit_idx) += local_counts.at(thread_idx).at(digit_idx);
     }
   }
 
-  for (int d = 1; d < 10; d++) {
-    global_count[d] += global_count[d - 1];
+  for (int digit_idx = 1; digit_idx < 10; digit_idx++) {
+    global_count.at(digit_idx) += global_count.at(digit_idx - 1);
   }
 
   std::array<int, 10> global_start = {};
-  for (int d = 1; d < 10; d++) {
-    global_start[d] = global_count[d - 1];
+  for (int digit_idx = 1; digit_idx < 10; digit_idx++) {
+    global_start.at(digit_idx) = global_count.at(digit_idx - 1);
   }
 
   std::vector<std::array<int, 10>> thread_offsets(thread_count);
-  for (int d = 0; d < 10; d++) {
-    int offset = global_start[d];
-    for (int t = 0; t < thread_count; t++) {
-      thread_offsets[t][d] = offset;
-      offset += local_counts[t][d];
+  for (int digit_idx = 0; digit_idx < 10; digit_idx++) {
+    int offset = global_start.at(digit_idx);
+    for (int thread_idx = 0; thread_idx < thread_count; thread_idx++) {
+      thread_offsets.at(thread_idx).at(digit_idx) = offset;
+      offset += local_counts.at(thread_idx).at(digit_idx);
     }
   }
 
@@ -88,12 +89,12 @@ void CountingSortByDigitParallel(std::vector<int> &arr, int exp) {
 #pragma omp parallel default(none) shared(arr, exp, output, n, thread_count, thread_offsets) num_threads(thread_count)
   {
     const int tid = omp_get_thread_num();
-    auto positions = thread_offsets[tid];
+    auto positions = thread_offsets.at(tid);
 
 #pragma omp for schedule(static)
     for (int i = 0; i < n; i++) {
-      const int digit = (arr[i] / exp) % 10;
-      output[positions[digit]++] = arr[i];
+      const int digit = (arr.at(i) / exp) % 10;
+      output.at(positions.at(digit)++) = arr.at(i);
     }
   }
 
@@ -160,9 +161,9 @@ bool KamaletdinovRBitwiseIntOMP::PreProcessingImpl() {
   const int n = GetInput();
   data_.resize(n);
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(n)
   for (int i = 0; i < n; i++) {
-    data_[i] = (n / 2) - i;
+    data_.at(i) = (n / 2) - i;
   }
 
   return true;
