@@ -30,23 +30,23 @@ void CountingSortByDigit(std::vector<int> &arr, int exp) {
   });
 
   std::array<int, 10> total = {};
-  for (int p = 0; p < num_parts; p++) {
-    for (int d = 0; d < 10; d++) {
-      total.at(d) += part_counts.at(p).at(d);
+  for (int pi = 0; pi < num_parts; pi++) {
+    for (int di = 0; di < 10; di++) {
+      total.at(di) += part_counts.at(pi).at(di);
     }
   }
 
   std::array<int, 10> starts = {};
-  for (int d = 1; d < 10; d++) {
-    starts.at(d) = starts.at(d - 1) + total.at(d - 1);
+  for (int di = 1; di < 10; di++) {
+    starts.at(di) = starts.at(di - 1) + total.at(di - 1);
   }
 
   std::vector<std::array<int, 10>> part_positions(num_parts);
-  for (int d = 0; d < 10; d++) {
-    int off = starts.at(d);
-    for (int p = 0; p < num_parts; p++) {
-      part_positions.at(p).at(d) = off;
-      off += part_counts.at(p).at(d);
+  for (int di = 0; di < 10; di++) {
+    int off = starts.at(di);
+    for (int pi = 0; pi < num_parts; pi++) {
+      part_positions.at(pi).at(di) = off;
+      off += part_counts.at(pi).at(di);
     }
   }
 
