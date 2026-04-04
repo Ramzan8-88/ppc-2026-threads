@@ -33,23 +33,23 @@ void CountingSortByDigitALL(std::vector<int> &arr, int exp) {
   }
 
   std::array<int, 10> global_count = {};
-  for (int t = 0; t < thread_count; t++) {
-    for (int d = 0; d < 10; d++) {
-      global_count.at(d) += local_counts.at(t).at(d);
+  for (int ti = 0; ti < thread_count; ti++) {
+    for (int di = 0; di < 10; di++) {
+      global_count.at(di) += local_counts.at(ti).at(di);
     }
   }
 
   std::array<int, 10> global_start = {};
-  for (int d = 1; d < 10; d++) {
-    global_start.at(d) = global_start.at(d - 1) + global_count.at(d - 1);
+  for (int di = 1; di < 10; di++) {
+    global_start.at(di) = global_start.at(di - 1) + global_count.at(di - 1);
   }
 
   std::vector<std::array<int, 10>> thread_offsets(thread_count);
-  for (int d = 0; d < 10; d++) {
-    int offset = global_start.at(d);
-    for (int t = 0; t < thread_count; t++) {
-      thread_offsets.at(t).at(d) = offset;
-      offset += local_counts.at(t).at(d);
+  for (int di = 0; di < 10; di++) {
+    int offset = global_start.at(di);
+    for (int ti = 0; ti < thread_count; ti++) {
+      thread_offsets.at(ti).at(di) = offset;
+      offset += local_counts.at(ti).at(di);
     }
   }
 
@@ -153,7 +153,7 @@ void BitwiseSortALL(std::vector<int> &arr) {
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
   for (int i = 0; i < size; i++) {
-    send_counts[i] = total / size + (i < total % size ? 1 : 0);
+    send_counts[i] = (total / size) + (i < total % size ? 1 : 0);
     displs[i] = (i == 0) ? 0 : displs[i - 1] + send_counts[i - 1];
   }
 
@@ -183,7 +183,10 @@ void BitwiseSortALL(std::vector<int> &arr) {
     arr = merged;
   } else {
     MPI_Gatherv(local_data.data(), send_counts[rank], MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0, MPI_COMM_WORLD);
+    arr.resize(total);
   }
+
+  MPI_Bcast(arr.data(), total, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 KamaletdinovRBitwiseIntALL::KamaletdinovRBitwiseIntALL(const InType &in) {
